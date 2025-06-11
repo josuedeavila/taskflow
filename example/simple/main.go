@@ -105,29 +105,28 @@ func (o *MinimalOrchestrator) execute(ctx context.Context, interactionType Inter
 func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType InteractionType) (interface{}, error) {
 	var finalResult interface{}
 
-	fetch := taskflow.NewTask("fetch", func(ctx context.Context, input interface{}) (interface{}, error) {
+	fetch := taskflow.NewTask("fetch", func(ctx context.Context, _ any) ([]string, error) {
 		log.Printf("🔍 Buscando eventos para %s", interactionType)
 		time.Sleep(500 * time.Millisecond)
 		return []string{"evt1", "evt2"}, nil
 	})
 
-	process := taskflow.NewTask("process", func(ctx context.Context, input interface{}) (interface{}, error) {
-		events := input.([]string)
-		log.Printf("⚙️ Processando %d eventos", len(events))
+	process := taskflow.NewTask("process", func(ctx context.Context, input []string) (map[string]int, error) {
+		log.Printf("⚙️ Processando %d eventos", len(input))
 
 		// Simula erro
 		if time.Now().Unix()%2 == 0 {
 			return nil, fmt.Errorf("erro simulado")
 		}
 
-		result := map[string]int{"processed": len(events)}
+		result := map[string]int{"processed": len(input)}
 		return result, nil
 	}).After(fetch)
 
-	capture := taskflow.NewTask("capture", func(ctx context.Context, input interface{}) (interface{}, error) {
-		finalResult = input.(map[string]int)
-		log.Printf("📦 Capturando resultado: %+v", finalResult)
-		return input, nil
+	capture := taskflow.NewTask("capture", func(ctx context.Context, input map[string]int) (any, error) {
+		finalResult = input
+		log.Printf("📦 Resultado capturado: %+v", finalResult)
+		return nil, nil
 	}).After(process)
 
 	runner := taskflow.NewRunner()

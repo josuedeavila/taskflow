@@ -19,10 +19,10 @@ func main() {
 		"https://httpbin.org/get",
 	}
 
-	fan := &taskflow.FanOutTask{
+	fan := &taskflow.FanOutTask[any, any]{
 		Name: "check_public_apis",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc, error) {
-			var fns []taskflow.TaskFunc
+		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, any], error) {
+			var fns []taskflow.TaskFunc[any, any]
 			for _, url := range apis {
 				url := url
 				fns = append(fns, func(ctx context.Context, _ any) (any, error) {
