@@ -3,13 +3,28 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/josuedeavila/taskflow"
 )
 
+type slogLogger struct {
+	*slog.Logger
+}
+
+func (l *slogLogger) Log(v ...any) {
+	slog.Info("TaskFlow Log", "message", fmt.Sprint(v...))
+}
+
+func newSlogLogger() *slogLogger {
+	l := slog.Default()
+	return &slogLogger{Logger: l}
+}
+
 func main() {
+	logger := newSlogLogger()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -35,7 +50,7 @@ func main() {
 						return map[string]any{"url": url, "status": "timeout", "err": err.Error()}, nil
 					}
 					defer resp.Body.Close()
-					fmt.Println("✔️ Fetched from:", url, "Status:", resp.StatusCode)
+					logger.Info(fmt.Sprintf("✔️ Fetched from: %s,  Status: %v", url, resp.StatusCode))
 					return map[string]any{
 						"url":    url,
 						"status": resp.StatusCode,
@@ -54,9 +69,9 @@ func main() {
 				statusCounts[status]++
 			}
 
-			fmt.Println("📊 Resumo de status (incluindo falhas):")
+			logger.Info("📊 Resumo de status (incluindo falhas):")
 			for k, v := range statusCounts {
-				fmt.Printf("  %s: %d respostas\n", k, v)
+				logger.Info(fmt.Sprintf("  %s: %d respostas\n", k, v))
 			}
 			return nil, nil
 		},
@@ -65,7 +80,7 @@ func main() {
 	aggregate := fan.ToTask()
 
 	logTask := taskflow.NewTask("log_summary", func(ctx context.Context, input any) (any, error) {
-		fmt.Println("✅ Finalizado.")
+		logger.Info("✅ Finalizado.")
 		return nil, nil
 	}).After(aggregate)
 
@@ -74,6 +89,6 @@ func main() {
 
 	// Executa
 	if err := runner.Run(ctx); err != nil {
-		fmt.Println("❌ Erro:", err)
+		logger.Error(fmt.Sprintf("❌ Erro: %s", err))
 	}
 }

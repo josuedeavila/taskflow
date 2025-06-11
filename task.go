@@ -22,11 +22,18 @@ type Task[In any, Out any] struct {
 	Result  Out
 	Err     error
 	once    sync.Once
+	Logger  Logger // Optional logger for task execution
 }
 
 // NewTask creates a new Task with the given name and function.
 func NewTask[In any, Out any](name string, fn TaskFunc[In, Out]) *Task[In, Out] {
-	return &Task[In, Out]{Name: name, Fn: fn}
+	return &Task[In, Out]{Name: name, Fn: fn, Logger: newDefaultLogger()}
+}
+
+// WithLogger sets the logger for the task.
+func (t *Task[In, Out]) WithLogger(logger Logger) *Task[In, Out] {
+	t.Logger = logger
+	return t
 }
 
 // After adds dependencies to the task.
@@ -43,6 +50,7 @@ func (t *Task[In, Out]) Run(ctx context.Context, input any) (any, error) {
 		for _, dep := range t.Depends {
 			output, err := dep.Run(ctx, currInput)
 			if err != nil {
+				t.Logger.Log(fmt.Sprintf("task %s dependency failed: %v", t.Name, err))
 				t.Err = err
 				return
 			}
@@ -53,7 +61,9 @@ func (t *Task[In, Out]) Run(ctx context.Context, input any) (any, error) {
 		if currInput != nil {
 			typedInput, ok := currInput.(In)
 			if !ok {
-				t.Err = fmt.Errorf("task: input type mismatch: expected %T, got %T", in, currInput)
+				err := fmt.Errorf("task: input type mismatch: expected %T, got %T", in, currInput)
+				t.Logger.Log(err.Error())
+				t.Err = err
 				return
 			}
 			in = typedInput

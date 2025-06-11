@@ -109,7 +109,7 @@ func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType I
 		log.Printf("🔍 Buscando eventos para %s", interactionType)
 		time.Sleep(500 * time.Millisecond)
 		return []string{"evt1", "evt2"}, nil
-	})
+	}).WithLogger(&taskflow.NoOpLogger{})
 
 	process := taskflow.NewTask("process", func(ctx context.Context, input []string) (map[string]int, error) {
 		log.Printf("⚙️ Processando %d eventos", len(input))
@@ -121,13 +121,13 @@ func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType I
 
 		result := map[string]int{"processed": len(input)}
 		return result, nil
-	}).After(fetch)
+	}).WithLogger(&taskflow.NoOpLogger{}).After(fetch)
 
 	capture := taskflow.NewTask("capture", func(ctx context.Context, input map[string]int) (any, error) {
 		finalResult = input
 		log.Printf("📦 Resultado capturado: %+v", finalResult)
 		return nil, nil
-	}).After(process)
+	}).WithLogger(&taskflow.NoOpLogger{}).After(process)
 
 	runner := taskflow.NewRunner()
 	runner.Add(capture)

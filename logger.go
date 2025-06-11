@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-// A Logger is a minimalistic interface for the loafer to log messages to. Should
-// be used to provide custom logging writers for the loafer to use.
+// A Logger is a minimalistic interface for the taskflow to log messages to. Should
+// be used to provide custom logging writers for the taskflow to use.
 type Logger interface {
 	Log(args ...any)
 }
