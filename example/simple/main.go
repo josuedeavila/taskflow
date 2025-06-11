@@ -76,7 +76,7 @@ func (o *MinimalOrchestrator) runLoop(ctx context.Context, interactionType Inter
 
 func (o *MinimalOrchestrator) execute(ctx context.Context, interactionType InteractionType, config *ProcessingConfig) error {
 	var err error
-	var result interface{}
+	var result any
 
 	for attempt := 1; attempt <= config.MaxRetries+1; attempt++ {
 		log.Printf("🚀 Executando tarefa (%d/%d): %s", attempt, config.MaxRetries+1, interactionType)
@@ -102,8 +102,8 @@ func (o *MinimalOrchestrator) execute(ctx context.Context, interactionType Inter
 	return err
 }
 
-func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType InteractionType) (interface{}, error) {
-	var finalResult interface{}
+func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType InteractionType) (any, error) {
+	var finalResult any
 
 	fetch := taskflow.NewTask("fetch", func(ctx context.Context, _ any) ([]string, error) {
 		log.Printf("🔍 Buscando eventos para %s", interactionType)
