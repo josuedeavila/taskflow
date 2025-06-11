@@ -12,39 +12,39 @@ func main() {
 	fmt.Println("Iniciando o exemplo TaskFlow com Máquina de Estados...")
 
 	// 1. Criando algumas funções de tarefa simples
-	taskFn1 := func(ctx context.Context, input any) (any, error) {
+	taskFn1 := func(ctx context.Context, _ any) (string, error) {
 		fmt.Println("  Executando Task 1: Busca de dados de usuários...")
 		time.Sleep(1 * time.Second) // Simula trabalho
 		select {
 		case <-ctx.Done():
 			fmt.Println("  Task 1 cancelada!")
-			return nil, ctx.Err()
+			return "", ctx.Err()
 		default:
 			fmt.Println("  Task 1 concluída.")
 			return "dados_usuarios", nil
 		}
 	}
 
-	taskFn2 := func(ctx context.Context, input any) (any, error) {
+	taskFn2 := func(ctx context.Context, input any) (string, error) {
 		fmt.Println("  Executando Task 2: Processamento de dados de produtos...")
 		time.Sleep(500 * time.Millisecond) // Simula trabalho
 		select {
 		case <-ctx.Done():
 			fmt.Println("  Task 2 cancelada!")
-			return nil, ctx.Err()
+			return "", ctx.Err()
 		default:
 			fmt.Println("  Task 2 concluída.")
 			return "dados_produtos", nil
 		}
 	}
 
-	taskFn3 := func(ctx context.Context, input any) (any, error) {
+	taskFn3 := func(ctx context.Context, input any) (string, error) {
 		fmt.Println("  Executando Task 3: Gerando relatório (depende de Task 1 e Task 2)...")
 		time.Sleep(1500 * time.Millisecond) // Simula trabalho
 		select {
 		case <-ctx.Done():
 			fmt.Println("  Task 3 cancelada!")
-			return nil, ctx.Err()
+			return "", ctx.Err()
 		default:
 			fmt.Printf("  Task 3 concluída com input: %v\n", input)
 			return "relatorio_final", nil
@@ -70,20 +70,20 @@ func main() {
 	taskError := taskflow.NewTask("SimularErro", taskFnErro)
 
 	// 3. Criando um FanOutTask
-	fanOutGenerateFunc := func(ctx context.Context) ([]taskflow.TaskFunc[any, any], error) {
+	fanOutGenerateFunc := func(ctx context.Context) ([]taskflow.TaskFunc[any, float64], error) {
 		fmt.Println("  FanOutTask: Gerando funções de fan-out...")
-		fns := []taskflow.TaskFunc[any, any]{
-			func(ctx context.Context, input any) (any, error) {
+		fns := []taskflow.TaskFunc[any, float64]{
+			func(ctx context.Context, input any) (float64, error) {
 				fmt.Println("    FanOut Sub-Task A: Calculando métrica X...")
 				time.Sleep(300 * time.Millisecond)
 				return 10.5, nil
 			},
-			func(ctx context.Context, input any) (any, error) {
+			func(ctx context.Context, input any) (float64, error) {
 				fmt.Println("    FanOut Sub-Task B: Calculando métrica Y...")
 				time.Sleep(700 * time.Millisecond)
 				return 20.0, nil
 			},
-			func(ctx context.Context, input any) (any, error) {
+			func(ctx context.Context, input any) (float64, error) {
 				fmt.Println("    FanOut Sub-Task C: Calculando métrica Z...")
 				time.Sleep(400 * time.Millisecond)
 				return 5.2, nil
@@ -92,7 +92,7 @@ func main() {
 		return fns, nil
 	}
 
-	fanInFunc := func(ctx context.Context, results any) (any, error) {
+	fanInFunc := func(ctx context.Context, results any) (float64, error) {
 		fmt.Println("  FanOutTask: Consolidando resultados...")
 		if resSlice, ok := results.([]any); ok {
 			sum := 0.0
@@ -102,12 +102,12 @@ func main() {
 				}
 			}
 			fmt.Printf("  FanOutTask: Soma dos resultados: %.2f\n", sum)
-			return fmt.Sprintf("Soma total: %.2f", sum), nil
+			return sum, nil
 		}
-		return nil, fmt.Errorf("erro ao consolidar resultados do FanOut")
+		return 0, fmt.Errorf("erro ao consolidar resultados do FanOut")
 	}
 
-	fanOutTask := &taskflow.FanOutTask[any, any]{
+	fanOutTask := &taskflow.FanOutTask[any, float64]{
 		Name:     "CalcularMetricas",
 		Generate: fanOutGenerateFunc,
 		FanIn:    fanInFunc,

@@ -6,14 +6,18 @@ import (
 	"sync"
 )
 
+// Executable defines the interface for a task that can be executed.
+type Executable interface {
+	Run(ctx context.Context, input any) (any, error)
+}
+
 // TaskFunc defines the signature for a function that can be executed as a task.
 type TaskFunc[In any, Out any] func(ctx context.Context, input In) (Out, error)
 
 // Task represents a unit of work that can be executed.
 type Task[In any, Out any] struct {
-	Name string
-	Fn   TaskFunc[In, Out]
-	// Depends []*Task[In, Out] // Dependencies that must be completed before this task can run
+	Name    string
+	Fn      TaskFunc[In, Out]
 	Depends []Executable // Dependencies that must be completed before this task can run
 	Result  Out
 	Err     error
@@ -26,9 +30,6 @@ func NewTask[In any, Out any](name string, fn TaskFunc[In, Out]) *Task[In, Out] 
 }
 
 // After adds dependencies to the task.
-// The task will wait for these dependencies to complete before executing.
-// It returns the task itself to allow method chaining.
-// If the dependencies are already set, it appends to the existing list.
 func (t *Task[In, Out]) After(tasks ...Executable) *Task[In, Out] {
 	t.Depends = append(t.Depends, tasks...)
 	return t

@@ -5,14 +5,9 @@ import (
 	"sync"
 )
 
-// Executable defines the interface for a task that can be executed.
-type Executable interface {
-	Run(ctx context.Context, input any) (any, error)
-}
-
 // Runner is a simple task runner that executes tasks concurrently.
 type Runner struct {
-	Tasks []Executable // List of tasks to be executed
+	Tasks []Executable
 }
 
 // NewRunner creates a new Runner instance.

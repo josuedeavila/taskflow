@@ -19,13 +19,13 @@ func main() {
 		"https://httpbin.org/get",
 	}
 
-	fan := &taskflow.FanOutTask[any, any]{
+	fan := &taskflow.FanOutTask[any, map[string]any]{
 		Name: "check_public_apis",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, any], error) {
-			var fns []taskflow.TaskFunc[any, any]
+		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, map[string]any], error) {
+			var fns []taskflow.TaskFunc[any, map[string]any]
 			for _, url := range apis {
 				url := url
-				fns = append(fns, func(ctx context.Context, _ any) (any, error) {
+				fns = append(fns, func(ctx context.Context, _ any) (map[string]any, error) {
 					req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 					if err != nil {
 						return map[string]any{"url": url, "status": "request-error", "err": err.Error()}, nil
@@ -45,7 +45,7 @@ func main() {
 			return fns, nil
 		},
 
-		FanIn: func(ctx context.Context, input any) (any, error) {
+		FanIn: func(ctx context.Context, input any) (map[string]any, error) {
 			results := input.([]any)
 			statusCounts := make(map[string]int)
 			for _, r := range results {
@@ -58,7 +58,7 @@ func main() {
 			for k, v := range statusCounts {
 				fmt.Printf("  %s: %d respostas\n", k, v)
 			}
-			return statusCounts, nil
+			return nil, nil
 		},
 	}
 
