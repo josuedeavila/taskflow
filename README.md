@@ -2,6 +2,8 @@
 
 Uma biblioteca Go para execução de tarefas com dependências e processamento paralelo.
 
+[Documentação de interfaces, tipos e métodos](https://pkg.go.dev/github.com/josuedeavila/taskflow)
+
 ## Instalação
 
 ```bash
@@ -96,16 +98,12 @@ Execute com:
 go run example/simple/main.go
 ```
 
-## Context e Timeout
+## Importante
 
-```go
-ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-defer cancel()
+O número de tarefas adicionadas ao Runner define diretamente o número de goroutines criadas durante a execução. Cada tarefa é executada de forma independente (respeitando as dependências), o que pode levar à criação de muitas goroutines simultâneas.
+→ Atenção: use com cuidado em ambientes com recursos limitados ou quando estiver lidando com muitas tarefas.
 
-if err := runner.Run(ctx); err != nil {
-    // tratamento de erro/timeout
-}
-```
+As tarefas são executadas concorretemente, mas não necessariamente em paralelo — a paralelização depende da disponibilidade de threads do Go runtime e do sistema operacional.
 
 ## Licença
 
