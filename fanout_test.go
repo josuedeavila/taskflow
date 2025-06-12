@@ -13,17 +13,17 @@ import (
 func TestFanOutTask_ToTask_Success(t *testing.T) {
 	fanOut := &taskflow.FanOutTask[any, float64]{
 		Name: "test_fanout",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, float64], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, float64], error) {
 			return []taskflow.TaskFunc[any, float64]{
 				func(ctx context.Context, _ any) (float64, error) { return 10.0, nil },
 				func(ctx context.Context, _ any) (float64, error) { return 20.0, nil },
 				func(ctx context.Context, _ any) (float64, error) { return 30.0, nil },
 			}, nil
 		},
-		FanIn: func(ctx context.Context, results any) (float64, error) {
+		FanIn: func(ctx context.Context, results []float64) (float64, error) {
 			sum := 0.0
-			for _, r := range results.([]any) {
-				sum += r.(float64)
+			for _, r := range results {
+				sum += r
 			}
 			return sum, nil
 		},
@@ -47,10 +47,10 @@ func TestFanOutTask_ToTask_GenerateError(t *testing.T) {
 	expectedErr := errors.New("generate failed")
 	fanOut := &taskflow.FanOutTask[any, string]{
 		Name: "test_fanout_generate_error",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, string], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, string], error) {
 			return nil, expectedErr
 		},
-		FanIn: func(ctx context.Context, results any) (string, error) {
+		FanIn: func(ctx context.Context, results []string) (string, error) {
 			return "should not reach here", nil
 		},
 	}
@@ -72,14 +72,14 @@ func TestFanOutTask_ToTask_TaskFuncError(t *testing.T) {
 	expectedErr := errors.New("task func failed")
 	fanOut := &taskflow.FanOutTask[any, string]{
 		Name: "test_fanout_task_error",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, string], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, string], error) {
 			return []taskflow.TaskFunc[any, string]{
 				func(ctx context.Context, _ any) (string, error) { return "success", nil },
 				func(ctx context.Context, _ any) (string, error) { return "", expectedErr },
 				func(ctx context.Context, _ any) (string, error) { return "another success", nil },
 			}, nil
 		},
-		FanIn: func(ctx context.Context, results any) (string, error) {
+		FanIn: func(ctx context.Context, results []string) (string, error) {
 			return "should not reach here", nil
 		},
 	}
@@ -101,13 +101,13 @@ func TestFanOutTask_ToTask_FanInError(t *testing.T) {
 	expectedErr := errors.New("fanin failed")
 	fanOut := &taskflow.FanOutTask[any, string]{
 		Name: "test_fanout_fanin_error",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, string], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, string], error) {
 			return []taskflow.TaskFunc[any, string]{
 				func(ctx context.Context, _ any) (string, error) { return "result1", nil },
 				func(ctx context.Context, _ any) (string, error) { return "result2", nil },
 			}, nil
 		},
-		FanIn: func(ctx context.Context, results any) (string, error) {
+		FanIn: func(ctx context.Context, results []string) (string, error) {
 			return "", expectedErr
 		},
 	}
@@ -128,7 +128,7 @@ func TestFanOutTask_ToTask_FanInError(t *testing.T) {
 func TestFanOutTask_ToTask_ContextCancellation(t *testing.T) {
 	fanOut := &taskflow.FanOutTask[any, string]{
 		Name: "test_fanout_context_cancel",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, string], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, string], error) {
 			return []taskflow.TaskFunc[any, string]{
 				func(ctx context.Context, _ any) (string, error) {
 					select {
@@ -148,7 +148,7 @@ func TestFanOutTask_ToTask_ContextCancellation(t *testing.T) {
 				},
 			}, nil
 		},
-		FanIn: func(ctx context.Context, results any) (string, error) {
+		FanIn: func(ctx context.Context, results []string) (string, error) {
 			return "combined", nil
 		},
 	}
@@ -170,11 +170,11 @@ func TestFanOutTask_ToTask_ContextCancellation(t *testing.T) {
 func TestFanOutTask_ToTask_EmptyGenerate(t *testing.T) {
 	fanOut := &taskflow.FanOutTask[any, string]{
 		Name: "test_fanout_empty",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, string], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, string], error) {
 			return []taskflow.TaskFunc[any, string]{}, nil
 		},
-		FanIn: func(ctx context.Context, results any) (string, error) {
-			resultSlice := results.([]any)
+		FanIn: func(ctx context.Context, results []string) (string, error) {
+			resultSlice := results
 			if len(resultSlice) != 0 {
 				t.Errorf("Expected empty results, got %d items", len(resultSlice))
 			}
@@ -202,7 +202,7 @@ func TestFanOutTask_ToTask_ConcurrentExecution(t *testing.T) {
 
 	fanOut := &taskflow.FanOutTask[any, int]{
 		Name: "test_fanout_concurrent",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, int], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, int], error) {
 			return []taskflow.TaskFunc[any, int]{
 				func(ctx context.Context, _ any) (int, error) {
 					time.Sleep(30 * time.Millisecond)
@@ -227,10 +227,10 @@ func TestFanOutTask_ToTask_ConcurrentExecution(t *testing.T) {
 				},
 			}, nil
 		},
-		FanIn: func(ctx context.Context, results any) (int, error) {
+		FanIn: func(ctx context.Context, results []int) (int, error) {
 			sum := 0
-			for _, r := range results.([]any) {
-				sum += r.(int)
+			for _, r := range results {
+				sum += r
 			}
 			return sum, nil
 		},
@@ -269,7 +269,7 @@ func TestFanOutTask_ToTask_TypeSafety(t *testing.T) {
 	// Test with string input/output types
 	fanOut := &taskflow.FanOutTask[string, string]{
 		Name: "test_fanout_strings",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[string, string], error) {
+		Generate: func(ctx context.Context, _ []string) ([]taskflow.TaskFunc[string, string], error) {
 			return []taskflow.TaskFunc[string, string]{
 				func(ctx context.Context, input string) (string, error) {
 					return "prefix_" + input, nil
@@ -279,9 +279,9 @@ func TestFanOutTask_ToTask_TypeSafety(t *testing.T) {
 				},
 			}, nil
 		},
-		FanIn: func(ctx context.Context, results any) (string, error) {
+		FanIn: func(ctx context.Context, results []string) (string, error) {
 			var combined string
-			for _, r := range results.([]string) {
+			for _, r := range results {
 				combined += r + "|"
 			}
 			return combined, nil
@@ -293,7 +293,7 @@ func TestFanOutTask_ToTask_TypeSafety(t *testing.T) {
 
 	// Note: The current implementation doesn't properly handle typed inputs
 	// This test documents the current behavior
-	result, err := task.Run(ctx, "test")
+	result, err := task.Run(ctx, []string{"test"})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

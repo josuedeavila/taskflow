@@ -349,6 +349,12 @@ func (m *mockTask) wasCalled() bool {
 	return m.called
 }
 
+func (m *mockTask) GetResult() any {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.result
+}
+
 func TestRunnerRunWithMockTasks(t *testing.T) {
 	runner := taskflow.NewRunner()
 

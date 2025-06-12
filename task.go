@@ -9,6 +9,7 @@ import (
 // Executable defines the interface for a task that can be executed.
 type Executable interface {
 	Run(ctx context.Context, input any) (any, error)
+	GetResult() any
 }
 
 // TaskFunc defines the signature for a function that can be executed as a task.
@@ -76,4 +77,9 @@ func (t *Task[In, Out]) Run(ctx context.Context, input any) (any, error) {
 	})
 
 	return t.Result, t.Err
+}
+
+// GetResult returns the result of the task execution.
+func (t *Task[In, Out]) GetResult() any {
+	return t.Result
 }

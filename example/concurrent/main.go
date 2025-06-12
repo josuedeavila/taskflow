@@ -84,7 +84,7 @@ func main() {
 	taskError := taskflow.NewTask("SimularErro", taskFnErro).WithLogger(logger)
 
 	// 3. Criando um FanOutTask
-	fanOutGenerateFunc := func(ctx context.Context) ([]taskflow.TaskFunc[any, float64], error) {
+	fanOutGenerateFunc := func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, float64], error) {
 		logger.Info("FanOutTask: Gerando funções de fan-out...")
 		fns := []taskflow.TaskFunc[any, float64]{
 			func(ctx context.Context, input any) (float64, error) {
@@ -106,19 +106,14 @@ func main() {
 		return fns, nil
 	}
 
-	fanInFunc := func(ctx context.Context, results any) (float64, error) {
+	fanInFunc := func(ctx context.Context, results []float64) (float64, error) {
 		logger.Info("FanOutTask: Consolidando resultados...")
-		if resSlice, ok := results.([]any); ok {
-			sum := 0.0
-			for _, r := range resSlice {
-				if val, ok := r.(float64); ok {
-					sum += val
-				}
-			}
-			logger.Info(fmt.Sprintf("FanOutTask: Soma dos resultados: %.2f", sum))
-			return sum, nil
+		sum := 0.0
+		for _, r := range results {
+			sum += r
 		}
-		return 0, fmt.Errorf("erro ao consolidar resultados do FanOut")
+		logger.Info(fmt.Sprintf("FanOutTask: Soma dos resultados: %.2f", sum))
+		return sum, nil
 	}
 
 	fanOutTask := &taskflow.FanOutTask[any, float64]{

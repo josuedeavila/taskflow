@@ -3,30 +3,59 @@ package taskflow_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/josuedeavila/taskflow" // Adjust the import path as necessary
 )
 
+type slogLogger struct {
+	*slog.Logger
+}
+
+func (l *slogLogger) Log(v ...any) {
+	slog.Info("TaskFlow Log", "message", fmt.Sprint(v...))
+}
 func TestNewTask(t *testing.T) {
-	fn := func(ctx context.Context, input string) (int, error) {
-		return len(input), nil
-	}
+	t.Run("create task with name and function", func(t *testing.T) {
+		fn := func(ctx context.Context, input string) (int, error) {
+			return len(input), nil
+		}
 
-	task := taskflow.NewTask("test", fn)
+		task := taskflow.NewTask("test", fn)
 
-	if task.Name != "test" {
-		t.Errorf("Expected name 'test', got '%s'", task.Name)
-	}
+		if task.Name != "test" {
+			t.Errorf("Expected name 'test', got '%s'", task.Name)
+		}
 
-	if task.Fn == nil {
-		t.Error("Expected function to be set")
-	}
+		if task.Fn == nil {
+			t.Error("Expected function to be set")
+		}
 
-	if len(task.Depends) != 0 {
-		t.Errorf("Expected no dependencies, got %d", len(task.Depends))
-	}
+		if len(task.Depends) != 0 {
+			t.Errorf("Expected no dependencies, got %d", len(task.Depends))
+		}
+	})
+
+	t.Run("create task with logger", func(t *testing.T) {
+		fn := func(ctx context.Context, input string) (int, error) {
+			return len(input), nil
+		}
+
+		l := slog.Default()
+		logger := &slogLogger{Logger: l}
+		task := taskflow.NewTask("test_with_logger", fn).WithLogger(logger)
+
+		if task.Logger == nil {
+			t.Error("Expected logger to be set")
+		}
+
+		if task.Name != "test_with_logger" {
+			t.Errorf("Expected name 'test_with_logger', got '%s'", task.Name)
+		}
+	})
 }
 
 func TestTaskRun(t *testing.T) {
@@ -66,8 +95,8 @@ func TestTaskRun(t *testing.T) {
 			}
 
 			if !tt.wantErr {
-				if task.Result != tt.expected {
-					t.Errorf("Expected result %d, got %d", tt.expected, task.Result)
+				if task.GetResult() != tt.expected {
+					t.Errorf("Expected result %d, got %d", tt.expected, task.GetResult())
 				}
 				if result != tt.expected {
 					t.Errorf("Expected returned result %d, got %d", tt.expected, result)

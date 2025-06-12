@@ -36,7 +36,7 @@ func main() {
 
 	fan := &taskflow.FanOutTask[any, map[string]any]{
 		Name: "check_public_apis",
-		Generate: func(ctx context.Context) ([]taskflow.TaskFunc[any, map[string]any], error) {
+		Generate: func(ctx context.Context, _ []any) ([]taskflow.TaskFunc[any, map[string]any], error) {
 			var fns []taskflow.TaskFunc[any, map[string]any]
 			for _, url := range apis {
 				url := url
@@ -60,12 +60,11 @@ func main() {
 			return fns, nil
 		},
 
-		FanIn: func(ctx context.Context, input any) (map[string]any, error) {
-			results := input.([]any)
+		FanIn: func(ctx context.Context, input []map[string]any) (map[string]any, error) {
+			results := input
 			statusCounts := make(map[string]int)
 			for _, r := range results {
-				res := r.(map[string]any)
-				status := fmt.Sprintf("%v", res["status"])
+				status := fmt.Sprintf("%v", r["status"])
 				statusCounts[status]++
 			}
 
