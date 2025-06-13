@@ -18,8 +18,8 @@ type FanOutTask[In any, Out any] struct {
 // If any function returns an error, it stops execution and returns the first error encountered.
 func (f *FanOutTask[In, Out]) ToTask() *Task[[]In, Out] {
 	return NewTask(f.Name, func(ctx context.Context, input []In) (Out, error) {
-		var zeroOut Out // Create a zero value of type T
-		var zeroIn In   // Create a zero value of type In
+		var zeroOut Out
+		var zeroIn In 
 		fns, err := f.Generate(ctx, input)
 		if err != nil {
 			return zeroOut, err
@@ -41,10 +41,6 @@ func (f *FanOutTask[In, Out]) ToTask() *Task[[]In, Out] {
 				if err != nil && firstErr == nil {
 					firstErr = err
 				}
-				// r, ok := any(res).(Out)
-				// if !ok {
-				// 	return
-				// }
 				results[i] = res
 			}()
 		}

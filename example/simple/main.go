@@ -68,7 +68,7 @@ func (o *MinimalOrchestrator) runLoop(ctx context.Context, interactionType Inter
 			<-o.semaphores[interactionType]
 
 			if err != nil {
-				log.Printf("⚠️ Tarefa falhou após todos os retries: %v", err)
+				log.Printf("⚠️ Task failed after all retries: %v", err)
 			}
 		}
 	}
@@ -79,26 +79,26 @@ func (o *MinimalOrchestrator) execute(ctx context.Context, interactionType Inter
 	var result any
 
 	for attempt := 1; attempt <= config.MaxRetries+1; attempt++ {
-		log.Printf("🚀 Executando tarefa (%d/%d): %s", attempt, config.MaxRetries+1, interactionType)
+		log.Printf("🚀 Executing task (%d/%d): %s", attempt, config.MaxRetries+1, interactionType)
 
 		jobCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		result, err = o.runPipeline(jobCtx, interactionType)
 		cancel()
 
 		if err == nil {
-			log.Printf("✅ Tarefa concluída: %+v", result)
+			log.Printf("✅ Task completed: %+v", result)
 			return nil
 		}
 
-		log.Printf("❌ Falha na tentativa %d: %v", attempt, err)
+		log.Printf("❌ Attempt %d failed: %v", attempt, err)
 
 		if attempt <= config.MaxRetries {
-			log.Printf("⏳ Aguardando %s antes do retry...", config.RetryDelay)
+			log.Printf("⏳ Waiting %s before retry...", config.RetryDelay)
 			time.Sleep(config.RetryDelay)
 		}
 	}
 
-	log.Printf("🛑 Todas as tentativas falharam para %s", interactionType)
+	log.Printf("🛑 All attempts failed for %s", interactionType)
 	return err
 }
 
@@ -106,17 +106,17 @@ func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType I
 	var finalResult any
 
 	fetch := taskflow.NewTask("fetch", func(ctx context.Context, _ any) ([]string, error) {
-		log.Printf("🔍 Buscando eventos para %s", interactionType)
+		log.Printf("🔍 Fetching events for %s", interactionType)
 		time.Sleep(500 * time.Millisecond)
 		return []string{"evt1", "evt2"}, nil
 	}).WithLogger(&taskflow.NoOpLogger{})
 
 	process := taskflow.NewTask("process", func(ctx context.Context, input []string) (map[string]int, error) {
-		log.Printf("⚙️ Processando %d eventos", len(input))
+		log.Printf("⚙️ Processing %d events", len(input))
 
-		// Simula erro
+		// Simulates error
 		if time.Now().Unix()%2 == 0 {
-			return nil, fmt.Errorf("erro simulado")
+			return nil, fmt.Errorf("simulated error")
 		}
 
 		result := map[string]int{"processed": len(input)}
@@ -125,7 +125,7 @@ func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType I
 
 	capture := taskflow.NewTask("capture", func(ctx context.Context, input map[string]int) (any, error) {
 		finalResult = input
-		log.Printf("📦 Resultado capturado: %+v", finalResult)
+		log.Printf("📦 Result captured: %+v", finalResult)
 		return nil, nil
 	}).WithLogger(&taskflow.NoOpLogger{}).After(process)
 
@@ -137,10 +137,10 @@ func (o *MinimalOrchestrator) runPipeline(ctx context.Context, interactionType I
 }
 
 func (o *MinimalOrchestrator) Shutdown() {
-	log.Println("🛑 Encerrando orquestrador...")
+	log.Println("🛑 Shutting down orchestrator...")
 	close(o.shutdown)
 	o.wg.Wait()
-	log.Println("✅ Encerrado")
+	log.Println("✅ Shutdown complete")
 }
 
 func main() {

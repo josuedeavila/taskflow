@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/josuedeavila/taskflow" // Adjust the import path as necessary
+	"github.com/josuedeavila/taskflow"
 )
 
 type slogLogger struct {

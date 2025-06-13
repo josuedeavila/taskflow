@@ -1,18 +1,18 @@
 # TaskFlow
 
-Uma biblioteca Go para execução de tarefas com dependências e processamento paralelo.
+A Go library for task execution with dependencies and parallel processing.
 
-[Documentação de interfaces, tipos e métodos](https://pkg.go.dev/github.com/josuedeavila/taskflow)
+[Interface, types, and methods documentation](https://pkg.go.dev/github.com/josuedeavila/taskflow)
 
-## Instalação
+## Installation
 
 ```bash
 go get github.com/josuedeavila/taskflow
 ```
 
-## Uso Básico
+## Basic Usage
 
-### Tarefas com Dependências
+### Tasks with Dependencies
 
 ```go
 package main
@@ -42,7 +42,7 @@ func main() {
 }
 ```
 
-### Processamento Paralelo (Fan-Out/Fan-In)
+### Parallel Processing (Fan-Out/Fan-In)
 
 ```go
 fanOut := &taskflow.FanOutTask[any, float64]{
@@ -69,42 +69,44 @@ runner.Add(task)
 runner.Run(context.Background())
 ```
 
-### Retry com Backoff
+### Retry with Backoff
 
 ```go
 err := taskflow.Retry(ctx, func(ctx context.Context) error {
-    // operação que pode falhar
+    // operation that might fail
     return doSomething()
 }, 3, time.Second)
 ```
 
-## Componentes
+## Components
 
-- **Task**: Unidade de trabalho com suporte a tipos genéricos
-- **Runner**: Executa tarefas respeitando dependências
-- **FanOutTask**: Execução paralela com consolidação de resultados
-- **Retry**: Retry com backoff exponencial
+- **Task**: Work unit with generic type support
+- **Runner**: Executes tasks respecting dependencies
+- **FanOutTask**: Parallel execution with result consolidation
+- **Retry**: Retry with exponential backoff
 
-## Exemplos
+## Examples
 
-O projeto inclui três exemplos na pasta `example/`:
+The project includes three examples in the `example/` folder:
 
-- `simple/`: Orquestrador básico com retry
-- `concurrent/`: Tarefas com dependências e processamento paralelo  
-- `http/`: Verificação paralela de APIs
+- `simple/`: Basic orchestrator with retry
+- `concurrent/`: Tasks with dependencies and parallel processing
+- `http/`: Parallel API checking
 
-Execute com:
+Run with:
+
 ```bash
 go run example/simple/main.go
 ```
 
-## Importante
+## Important
 
-O número de tarefas adicionadas ao Runner define diretamente o número de goroutines criadas durante a execução. Cada tarefa é executada de forma independente (respeitando as dependências), o que pode levar à criação de muitas goroutines simultâneas.
-→ Atenção: use com cuidado em ambientes com recursos limitados ou quando estiver lidando com muitas tarefas.
+The number of tasks added to the Runner directly defines the number of goroutines created during execution. Each task is executed independently (respecting dependencies), which can lead to the creation of many simultaneous goroutines.
 
-As tarefas são executadas concorretemente, mas não necessariamente em paralelo — a paralelização depende da disponibilidade de threads do Go runtime e do sistema operacional.
+→ **Caution**: use carefully in resource-constrained environments or when dealing with many tasks.
 
-## Licença
+Tasks are executed concurrently, but not necessarily in parallel — parallelization depends on the availability of Go runtime threads and the operating system.
 
-MIT License - veja [LICENSE](LICENSE)
+## License
+
+MIT License - see [LICENSE](LICENSE)

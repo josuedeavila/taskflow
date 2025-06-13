@@ -68,9 +68,9 @@ func main() {
 				statusCounts[status]++
 			}
 
-			logger.Info("📊 Resumo de status (incluindo falhas):")
+			logger.Info("📊 Resume of status:")
 			for k, v := range statusCounts {
-				logger.Info(fmt.Sprintf("  %s: %d respostas\n", k, v))
+				logger.Info(fmt.Sprintf("  %s: %d responses\n", k, v))
 			}
 			return nil, nil
 		},
@@ -79,7 +79,7 @@ func main() {
 	aggregate := fan.ToTask()
 
 	logTask := taskflow.NewTask("log_summary", func(ctx context.Context, input any) (any, error) {
-		logger.Info("✅ Finalizado.")
+		logger.Info("✅ Done.")
 		return nil, nil
 	}).After(aggregate)
 
@@ -88,6 +88,6 @@ func main() {
 
 	// Executa
 	if err := runner.Run(ctx); err != nil {
-		logger.Error(fmt.Sprintf("❌ Erro: %s", err))
+		logger.Error(fmt.Sprintf("❌ Error: %s", err))
 	}
 }

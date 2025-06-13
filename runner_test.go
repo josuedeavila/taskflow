@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/josuedeavila/taskflow" // Adjust the import path as necessary
+	"github.com/josuedeavila/taskflow"
 )
 
 func TestNewRunner(t *testing.T) {
